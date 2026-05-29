@@ -1,5 +1,5 @@
 import useSWRMutation from "swr/mutation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { RateInputs, RateResult } from "@/types";
 import { useBenchmarks } from "./useBenchmarks";
 import { calculateRateClient } from "@/lib/rate-engine";
@@ -40,11 +40,14 @@ export function useRate() {
   // Use confirmed API result if available, fall back to optimistic preview
   const result = data?.data ?? optimisticResult;
 
+  // Stable reference — new array only when `data` changes, not on every render
+  const insights = useMemo(() => data?.data?.insights ?? [], [data]);
+
   return {
     calculate: trigger,
     isMutating,
     result,
-    insights: data?.data?.insights ?? [],
+    insights,
     tier: data?.data?.tier ?? null,
     isError: !!error,
   };

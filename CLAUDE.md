@@ -67,16 +67,16 @@ Early-stage Next.js 16 app using the **App Router** exclusively. No Pages Router
  */
 ```
 
-- Internal helper functions with non-obvious logic also get JSDoc, exceptions are withSessionRoute ussage
+- Internal helper functions with non-obvious logic also get JSDoc; `withSessionRoute` wrappers are exempt
 
 ## Tech-Stack
 
 | Layer         | Choice                                     |
 | ------------- | ------------------------------------------ |
-| Framework     | Next.js 15, App Router, Turbopack          |
+| Framework     | Next.js 16, App Router, Turbopack          |
 | Language      | TypeScript (strict mode)                   |
 | Styling       | Tailwind CSS v4 + shadcn/ui                |
-| Icons         | react-icons                                |
+| Icons         | lucide-react (primary) · react-icons (fallback only) |
 | Data fetching | SWR + useSWRMutation + use-debounce        |
 | Auth          | iron-session (own register/login + bcrypt) |
 | ORM           | Prisma (MongoDB provider)                  |
@@ -157,8 +157,6 @@ mediakitlab/
 
 ---
 
-**Path alias:** `@/` maps to the project root.
-
 ## Next.js 16 Breaking Changes to Know
 
 **Async Request APIs** — `cookies()`, `headers()`, `draftMode()`, `params`, and `searchParams` are now fully async. Always `await` them:
@@ -235,9 +233,6 @@ RateCard     — id, userId, platform, niche, followers, engagementRate, city, d
 Benchmark    — id, version, data (Json), createdAt, updatedAt
 ```
 
-- `npx prisma db push` to sync schema — no migration files with MongoDB
-- `npx prisma generate` after every schema change before running dev server
-
 ---
 
 ## Styling
@@ -256,6 +251,63 @@ pnpm shadcn add <component-name>
 
 The `Button` component uses `Slot.Root` from `radix-ui` (not `@radix-ui/react-slot`) — the project imports directly from `radix-ui`.
 
+## Icons
+
+Always reach for **lucide-react** first. Use react-icons only when lucide has no equivalent icon. Never import from both for the same visual purpose. In button/link elements, use `data-icon="inline-start"` — no manual size classes on icons inside buttons.
+
+## shadcn/ui Conventions
+
+- **Never `space-y-*`** — always `flex flex-col gap-*`
+- **`size-*`** for square/equal dimensions (e.g. `size-8` not `h-8 w-8`)
+- **`data-icon="inline-start"`** on icons inside `<Button>` — no className sizing
+- **Ternary not `&&`** for JSX conditionals: `{cond ? <X /> : null}` not `{cond && <X />}`
+- **Semantic color tokens only** — `text-muted-foreground`, `border-border`, `bg-primary/10`, etc. No raw Tailwind colors like `text-gray-500`
+
+## React Performance
+
+**`memo()`** — wrap any component whose props only change due to external events (API responses, user confirming), not every parent state change. Pattern:
+
+```tsx
+export const MyComponent = memo(function MyComponent({ ... }) { ... });
+```
+
+**`useCallback`** — wrap all handler functions passed as props. Use functional state updates so the dep array stays empty:
+
+```ts
+const handleChange = useCallback(
+  (value: string) => setState((p) => ({ ...p, value })),
+  [], // empty — functional update doesn't close over state
+);
+```
+
+**`useMemo`** for stable references — never return `?? []` or `?? {}` directly from a hook; it creates a new reference every render:
+
+```ts
+// BAD — new [] reference every render when data is null
+return { items: data?.items ?? [] };
+
+// GOOD — stable reference, only recreated when data changes
+const items = useMemo(() => data?.items ?? [], [data]);
+return { items };
+```
+
+**Loading state ordering** — always check for existing data before checking `isMutating`. This keeps content mounted during re-fetch instead of swapping to skeletons:
+
+```tsx
+// GOOD — content stays mounted during refetch
+{result ? <Content result={result} /> : isMutating ? <Skeleton /> : null}
+
+// BAD — unmounts content every time isMutating is true
+{isMutating ? <Skeleton /> : result ? <Content result={result} /> : null}
+```
+
+## Prisma
+
+**Locked at 6.19.3** — do not upgrade to Prisma 7. Prisma 7 dropped MongoDB direct connection support; it requires a driver adapter (none exists for MongoDB). The only path to Prisma 7 + MongoDB is Prisma Accelerate (paid). Stay on 6.
+
+- `npx prisma db push` to sync schema — no migration files with MongoDB
+- `npx prisma generate` after every schema change before running dev server
+
 ## What NOT to Do
 
 - No PUT / PATCH / DELETE HTTP methods
@@ -263,3 +315,5 @@ The `Button` component uses `Slot.Root` from `radix-ui` (not `@radix-ui/react-sl
 - No hardcoded multipliers in components — always fetch from `getBenchmarks()`
 - No `console.log` in production code paths
 - No inline type definitions — all types go in `types/index.ts`
+- No `space-y-*` utility classes — use `flex flex-col gap-*`
+- No upgrading Prisma past 6.19.3

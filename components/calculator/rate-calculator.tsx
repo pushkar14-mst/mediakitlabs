@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "use-debounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,37 @@ export function RateCalculator() {
   const { calculate, isMutating, result, insights, tier } = useRate();
   const { saveCard, isSaving } = useRateCards();
 
+  const handlePlatformChange = useCallback(
+    (platform: RateInputs["platform"]) =>
+      setInputs((p) => ({ ...p, platform })),
+    [],
+  );
+
+  const handleNicheChange = useCallback(
+    (niche: RateInputs["niche"]) => setInputs((p) => ({ ...p, niche })),
+    [],
+  );
+
+  const handleFollowersChange = useCallback(
+    (followers: number) => setInputs((p) => ({ ...p, followers })),
+    [],
+  );
+
+  const handleERChange = useCallback(
+    (engagementRate: number) => setInputs((p) => ({ ...p, engagementRate })),
+    [],
+  );
+
+  const handleCityChange = useCallback(
+    (city: CityTier) => setInputs((p) => ({ ...p, city })),
+    [],
+  );
+
+  const handleDeliverableChange = useCallback(
+    (deliverable: Deliverable) => setInputs((p) => ({ ...p, deliverable })),
+    [],
+  );
+
   useEffect(() => {
     if (benchmarks) {
       calculate(debouncedInputs);
@@ -60,7 +91,7 @@ export function RateCalculator() {
   /**
    * Saves the current rate card result to the user's account.
    */
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     if (!result) return;
 
     try {
@@ -74,7 +105,7 @@ export function RateCalculator() {
     } catch {
       toast.error("Failed to save");
     }
-  }
+  }, [result, inputs, saveCard]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 max-w-5xl mx-auto">
@@ -83,14 +114,14 @@ export function RateCalculator() {
         <CardContent className="flex flex-col gap-6 pt-6">
           <PlatformSelector
             value={inputs.platform}
-            onChange={(platform) => setInputs((p) => ({ ...p, platform }))}
+            onChange={handlePlatformChange}
           />
 
           <Separator />
 
           <NicheSelector
             value={inputs.niche}
-            onChange={(niche) => setInputs((p) => ({ ...p, niche }))}
+            onChange={handleNicheChange}
             benchmarks={benchmarks}
           />
 
@@ -98,14 +129,12 @@ export function RateCalculator() {
 
           <FollowerSlider
             value={inputs.followers}
-            onChange={(followers) => setInputs((p) => ({ ...p, followers }))}
+            onChange={handleFollowersChange}
           />
 
           <ERSlider
             value={inputs.engagementRate}
-            onChange={(engagementRate) =>
-              setInputs((p) => ({ ...p, engagementRate }))
-            }
+            onChange={handleERChange}
           />
 
           <Separator />
@@ -119,7 +148,7 @@ export function RateCalculator() {
               {CITY_TIERS.map((c) => (
                 <button
                   key={c.value}
-                  onClick={() => setInputs((p) => ({ ...p, city: c.value }))}
+                  onClick={() => handleCityChange(c.value)}
                   className={cn(
                     "py-2 rounded-lg border text-xs text-center transition-colors",
                     inputs.city === c.value
@@ -142,9 +171,7 @@ export function RateCalculator() {
               {DELIVERABLES.map((d) => (
                 <button
                   key={d.value}
-                  onClick={() =>
-                    setInputs((p) => ({ ...p, deliverable: d.value }))
-                  }
+                  onClick={() => handleDeliverableChange(d.value)}
                   className={cn(
                     "py-2 rounded-lg border text-xs text-center transition-colors",
                     inputs.deliverable === d.value

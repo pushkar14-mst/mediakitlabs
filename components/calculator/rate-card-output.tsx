@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { RateResult } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -30,7 +31,7 @@ function formatINR(n: number): string {
  * @param tier - Creator tier label e.g. "Micro creator"
  * @param isMutating - Whether a calculation is currently in flight
  */
-export function RateCardOutput({
+export const RateCardOutput = memo(function RateCardOutput({
   result,
   insights,
   tier,
@@ -61,7 +62,59 @@ export function RateCardOutput({
 
       {/* Rate tiers */}
       <div className="rounded-lg border border-border overflow-hidden">
-        {isMutating ? (
+        {result ? (
+          <>
+            <div className="flex items-center justify-between p-4">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs text-muted-foreground">Floor rate</p>
+                <p className="text-[10px] text-muted-foreground/60">
+                  Don't go below this
+                </p>
+              </div>
+              <p className="text-lg font-medium">
+                {formatINR(result.floorRate)}
+              </p>
+            </div>
+
+            <Separator />
+
+            <div
+              className={cn(
+                "flex items-center justify-between p-4",
+                "bg-primary/5",
+              )}
+            >
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium">Recommended</p>
+                  <Badge className="text-[10px] px-1.5 py-0">
+                    sweet spot
+                  </Badge>
+                </div>
+                <p className="text-[10px] text-muted-foreground/60">
+                  Pitch this first
+                </p>
+              </div>
+              <p className="text-xl font-medium text-primary">
+                {formatINR(result.midRate)}
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between p-4">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs text-muted-foreground">Premium rate</p>
+                <p className="text-[10px] text-muted-foreground/60">
+                  For exclusivity deals
+                </p>
+              </div>
+              <p className="text-lg font-medium">
+                {formatINR(result.premiumRate)}
+              </p>
+            </div>
+          </>
+        ) : isMutating ? (
           <div className="flex flex-col gap-px">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex justify-between items-center p-4">
@@ -70,61 +123,7 @@ export function RateCardOutput({
               </div>
             ))}
           </div>
-        ) : (
-          result ? (
-            <>
-              <div className="flex items-center justify-between p-4">
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-xs text-muted-foreground">Floor rate</p>
-                  <p className="text-[10px] text-muted-foreground/60">
-                    Don't go below this
-                  </p>
-                </div>
-                <p className="text-lg font-medium">
-                  {formatINR(result.floorRate)}
-                </p>
-              </div>
-
-              <Separator />
-
-              <div
-                className={cn(
-                  "flex items-center justify-between p-4",
-                  "bg-primary/5",
-                )}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-medium">Recommended</p>
-                    <Badge className="text-[10px] px-1.5 py-0">
-                      sweet spot
-                    </Badge>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground/60">
-                    Pitch this first
-                  </p>
-                </div>
-                <p className="text-xl font-medium text-primary">
-                  {formatINR(result.midRate)}
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between p-4">
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-xs text-muted-foreground">Premium rate</p>
-                  <p className="text-[10px] text-muted-foreground/60">
-                    For exclusivity deals
-                  </p>
-                </div>
-                <p className="text-lg font-medium">
-                  {formatINR(result.premiumRate)}
-                </p>
-              </div>
-            </>
-          ) : null
-        )}
+        ) : null}
       </div>
 
       {/* Insights */}
@@ -143,4 +142,4 @@ export function RateCardOutput({
       ) : null}
     </div>
   );
-}
+});
