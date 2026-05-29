@@ -42,7 +42,7 @@ export function Navbar({ user }: NavbarProps) {
   }
 
   return (
-    <nav className="h-14 border-b border-border flex items-center justify-between px-6">
+    <nav className="h-14 border-b border-border flex items-center justify-between px-6 sticky top-0 bg-background z-10">
       <Link
         href="/"
         className="flex items-center gap-2 font-medium text-sm text-foreground"
